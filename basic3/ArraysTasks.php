@@ -102,9 +102,6 @@ $countries = [
 $state = [];
 
 foreach($countries as $item) {
-    if(!array_key_exists($item[0], $state))
-        $state[$item[0]] = $item[2];
-    else
-        $state[$item[0]] += (int)$item[2];
+    array_key_exists($item[0], $state) ? $state[$item[0]] += (int)$item[2] : $state[$item[0]] = $item[2];
 }
 printAssocArray($state);
