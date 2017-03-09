@@ -1,0 +1,16 @@
+{
+    "name": "root/sg-news",
+    "require-dev": {
+        "simplepie/simplepie": "^1.4"
+    },
+    "authors": [
+        {
+            "name": "Vadym Stetsyuk",
+            "email": "stetsyuk.vadim@gmail.com"
+        }
+    ],
+    "require": {
+        "illuminate/support": "^5.4",
+        "illuminate/pagination": "^5.4"
+    }
+}

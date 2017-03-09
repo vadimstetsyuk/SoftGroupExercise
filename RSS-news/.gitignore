@@ -1,0 +1,10 @@
+# dependencies
+/vendor
+
+# IDEs and editors
+/.vscode
+.project
+.classpath
+.c9/
+*.launch
+.settings/
