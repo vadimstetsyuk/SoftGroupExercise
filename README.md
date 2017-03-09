@@ -11,3 +11,6 @@ https://github.com/vadimstetsyuk/SoftGroupExercise/tree/master/basic3
 
 Basic 4
 https://github.com/vadimstetsyuk/SoftGroupExercise/tree/master/basic4
+
+RSS-news
+https://github.com/vadimstetsyuk/SoftGroupExercise/tree/master/RSS-news
