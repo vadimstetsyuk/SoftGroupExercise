@@ -1,74 +1,91 @@
 <?php
-  require_once('../vendor/autoload.php');
 
-  require_once('../app/config/settings.php');
+require_once '../vendor/autoload.php';
 
-  require_once('../app/components/Paginator.php');
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Session\Session;
 
-  $stm = $db->query("select * from news");
+use Symfony\Component\Routing\Matcher\UrlMatcher;
+use Symfony\Component\Routing\RequestContext;
+use Symfony\Component\Routing\RouteCollection;
+use Symfony\Component\Routing\Route;
 
-  $items = array();
-  while($row = $stm->fetch()){
-      $items[] = $row;
-  }
+// $_SERVER['REQUEST_URI'] = preg_replace('|/$|', '', $_SERVER['REQUEST_URI'], 1);
+$request = Request::createFromGlobals();
+$response = new Response;
 
-  $currentPage = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+$session = new Session;
+$session->start();
 
-  $perPage = 10;
+$request->setSession($session);
 
-  $currentItems = array_slice($items, $perPage * ($currentPage - 1), $perPage);
+$routes = new RouteCollection();
+
+$routes->add('index', new Route('/', ['_controller' => 'App\Controller\Front@getIndex'],
+    [], [], '', [], ['GET']));
+$routes->add('get_login', new Route('/login', ['_controller' => 'App\Controller\Front@getLogin'],
+    [], [], '', [], ['GET']));
+$routes->add('post_login', new Route('/login', ['_controller' => 'App\Controller\Front@postLogin'],
+    [], [], '', [], ['POST']));
+$routes->add('logout', new Route('/logout', ['_controller' => 'App\Controller\Front@getLogout'],
+    [], [], '', [], ['GET']));
+$routes->add('get_cabinet', new Route('/cabinet', ['_controller' => 'App\Controller\Cabinet@getCabinet'],
+    [], [], '', [], ['GET']));
+$routes->add('post_cabinet', new Route('/cabinet', ['_controller' => 'App\Controller\Cabinet@postSelectedButton'],
+    [], [], '', [], ['POST']));
+
+$routes->add('get_add_news', new Route('/add_news', ['_controller' => 'App\Controller\News@getAddPage'],
+    [], [], '', [], ['GET']));
+$routes->add('post_add_news', new Route('/add_news', ['_controller' => 'App\Controller\News@postNews'],
+    [], [], '', [], ['POST']));
+
+$routes->add('get_edit_news', new Route('/edit_news', ['_controller' => 'App\Controller\News@getEditPage'],
+    [], [], '', [], ['GET']));
+$routes->add('put_edit_news', new Route('/edit_news', ['_controller' => 'App\Controller\News@putNews'],
+    [], [], '', [], ['POST']));
+
+$routes->add('get_delete_news', new Route('/delete_news', ['_controller' => 'App\Controller\News@getDeletePage'],
+    [], [], '', [], ['GET']));
+$routes->add('get_delete_news', new Route('/delete_news', ['_controller' => 'App\Controller\News@deleteNews'],
+    [], [], '', [], ['POST']));
 
 
-  $paginator = new Paginator($currentItems, count($items), $perPage, $currentPage);
+$context = new RequestContext();
+$context->fromRequest($request);
 
- ?>
-<html>
-  <head>
-    <title>RSS news</title>
-    <link rel = "stylesheet" type = "text/css" href = "./css/bootstrap.css">
-     <link rel = "stylesheet" type = "text/css" href = "./css/style.css">
-  </head>
-  <body>
-    <div class = "container">
-      <div class = "row">
-        <div  class = "col-md-12">
-          <div class="well">
-            <div class="list-group">
-              <?php
-                foreach($paginator->items() as $item){
-                  echo <<<ITEM
-                  <div class="list-group-item">
-                    <div class="media col-md-3">
-                              <a href = " . {$item["link"]} . ">{$item["title"]}</a>
-                              <h6></h6>
-                    </div>
-                    <div class="col-md-6">
-                             <h4 class="list-group-item-heading">Опис</h4>
-                             <p class="list-group-item-text">
-                                {$item["description"]}
-                             </p>
-                             <h4 class="list-group-item-heading">Джерело</h4>
-                             <p class="list-group-item-text">
-                                {$item["source"]}
-                             </p>
-                    </div>
-                    <div class="col-md-3 text-center">
-                            <h6>Дата</h6>
-                            {$item["pub_data"]}
-                    </div>
-                  </div>
-ITEM;
-                }
-               ?>
-            </div>
-          </div>
-          <div class = "center">
-              <div class = "pagination">
-                    <?=$paginator->render()?>
-              </div>
-          </div>
-        </div>
-      </div>
-  </div>
-  </body>
-</html>
+$matcher = new UrlMatcher($routes, $context);
+
+try {
+    $parameters = $matcher->matchRequest($request);
+    $request->attributes->replace($parameters);
+    $action = $parameters['_controller'];
+} catch (Symfony\Component\Routing\Exception\ResourceNotFoundException $e) {
+    $response->setStatusCode('404');
+    $response->setContent('404: Page not found');
+} catch (Symfony\Component\Routing\Exception\MethodNotAllowedException $e) {
+    $response->setStatusCode('405');
+    $response->setContent('405: Method not allowed');
+}
+
+if (isset($action) && is_string($action)) {
+    $controller = explode('@', $action);
+
+    $controller_class_name = $controller[0];
+    $controller_instance = new $controller_class_name;
+    $method = $controller[1];
+
+    $response = $controller_instance->$method($request, $response);
+}
+
+if (isset($action) && is_callable($action)) {
+    $response = $action($request, $response);
+}
+
+// if (! isset($action)) {
+//     $response->setStatusCode('404');
+//     $response->setContent('404: Page not found');
+// }
+
+$response->send();
