@@ -14,3 +14,6 @@ https://github.com/vadimstetsyuk/SoftGroupExercise/tree/master/basic4
 
 RSS-news
 https://github.com/vadimstetsyuk/SoftGroupExercise/tree/master/RSS-news
+
+rss-news-silex
+https://github.com/vadimstetsyuk/SoftGroupExercise/tree/master/rss-news-silex
